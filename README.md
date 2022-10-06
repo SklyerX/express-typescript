@@ -25,7 +25,7 @@ Thats it your done!
 
 this npm package is not a framework or a library! it is not a replacement for express or any of the expressjs frameworks.
 
-What slx actually is:
+What this tool actually is:
 
 - a generator tool that creates apis
 - cli tool
