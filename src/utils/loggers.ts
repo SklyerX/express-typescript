@@ -7,11 +7,3 @@ export function success(message: any) {
 export function error(message: any) {
   console.log(chalk.red(message));
 }
-
-export function alert(message: any) {
-  console.log(chalk.cyan(message));
-}
-
-export function warn(message: any) {
-  console.log(chalk.yellowBright(message));
-}

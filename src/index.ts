@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import { createSpinner } from "nanospinner";
 import fs from "fs";
-import { error } from "./utils/loggers";
+import { error, success } from "./utils/loggers";
 import {
   dotenv,
   editorconfig,
@@ -31,11 +30,6 @@ async function bootstrap() {
     process.exit();
   }
   projectName = process.argv[3];
-
-  const spinner = createSpinner().start({
-    text: "Creating project files...",
-    color: "cyan",
-  });
 
   // Create data
   await fs.mkdirSync(`${projectName}`);
@@ -69,8 +63,7 @@ async function bootstrap() {
     healthts
   );
 
-  spinner.success({ text: "Sucess! Project files created." });
-
+  success("The project file has been generated");
   console.log(`cd ${projectName}\nnpm install\nnodemon start`);
 }
 
