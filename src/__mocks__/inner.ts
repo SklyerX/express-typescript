@@ -30,7 +30,7 @@ app.listen(PORT, () =>
   success("Listening to requests at: http://127.0.0.1:" + PORT, "Notification"),
 );
 
-mongoose.connect(MONGODB_URI, { retryWrites: true, w: 'majority' });
+mongoose.connect(\`\${MONGODB_URI}\`, { retryWrites: true, w: 'majority' });
 mongoose.connection
   .on('connected', () => {
     warn("To MongoDB", 'Db Connected');
