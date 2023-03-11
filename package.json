@@ -1,12 +1,12 @@
 {
   "name": "@sklyerx/express-typescript",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "A nodejs cli to create fast and powerfull express-typescript api",
   "main": "src/index.ts",
   "bin": "./dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node -r tsconfig-paths/register src/index awd --git true --download true --npm false",
+    "start": "ts-node -r tsconfig-paths/register src/index generate",
     "build": "tsc"
   },
   "repository": {
