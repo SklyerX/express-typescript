@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.editorconfig = exports.dotenv = exports.eslint = exports.gitignore = exports.prettier = exports.nodemonjson = exports.packagejson = exports.tsconfig = void 0;
+exports.extsconfigjson = exports.editorconfig = exports.dotenv = exports.eslint = exports.gitignore = exports.prettier = exports.nodemonjson = exports.packagejson = exports.tsconfig = void 0;
 exports.tsconfig = String.raw `{
     "compilerOptions": {
         /* Visit https://aka.ms/tsconfig to read more about this file */
@@ -254,3 +254,7 @@ trim_trailing_whitespace = false
 [*.{js,jsx,json,ts,tsx,yml}]
 indent_size = 2
 indent_style = space`;
+const extsconfigjson = (projectName) => String.raw `{
+  "projectName": "${projectName}"
+}`;
+exports.extsconfigjson = extsconfigjson;

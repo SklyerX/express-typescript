@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.healthts = exports.maints = exports.utilsSlashLoggersts = exports.indexts = void 0;
+exports.templateFilets = exports.healthts = exports.maints = exports.utilsSlashLoggersts = exports.indexts = void 0;
 exports.indexts = `import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -33,7 +33,7 @@ app.listen(PORT, () =>
   success("Listening to requests at: http://127.0.0.1:" + PORT, "Notification"),
 );
 
-mongoose.connect(MONGODB_URI, { retryWrites: true, w: 'majority' });
+mongoose.connect(\`\${MONGODB_URI}\`, { retryWrites: true, w: 'majority' });
 mongoose.connection
   .on('connected', () => {
     warn("To MongoDB", 'Db Connected');
@@ -104,9 +104,20 @@ router.use((req, res, next) => {
 });
 
 router.get('/health', require('./endpoints/health'));`;
-exports.healthts = `module.exports = (req: any, res: any) => {
+exports.healthts = `import { Request, Response } from "express";
+
+module.exports = (req: Request, res: Response) => {
   return res.status(200).send({
     success: true,
     message: 'The api is active and healthy.',
   });
+};`;
+exports.templateFilets = `import { Request, Response } from "express";
+
+module.exports = (req: Request, res: Response) => {
+  res.status(302).send({
+    message: "Endpoint is live"
+  });
+  
+  return 0;
 };`;
