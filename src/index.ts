@@ -19,6 +19,7 @@ import {
   healthts,
   indexts,
   maints,
+  templateFilets,
   utilsSlashLoggersts,
 } from "./__mocks__/inner";
 import { error, info, success } from "./utils/loggers";
@@ -91,7 +92,9 @@ async function bootstrap() {
 
   if (_.length <= 0) {
     error("Provide a name!");
-    info("Run like: express-typescript dirname --git boolean");
+    info(
+      "Run like: express-typescript dirname --git true --download true --npm false"
+    );
     return 1;
   }
 
@@ -168,11 +171,6 @@ async function addNewRoute() {
     if (err == null) {
       const data = JSON.parse(fs.readFileSync("./exts.config.json", "utf-8"));
       const projectName = data.projectName;
-
-      await fs.writeFileSync(
-        `./${projectName}/src/routes/v1/endpoints/${controllerName}.ts`,
-        healthts
-      );
       fs.appendFile(
         `./${projectName}/src/routes/v1/main.ts`,
         `router.get('/${controllerName}', require('./endpoints/${controllerName}'));`,
@@ -180,6 +178,10 @@ async function addNewRoute() {
           if (err) return error("Something went wrong!");
           success("New file endpoint generated.");
         }
+      );
+      await fs.writeFileSync(
+        `./${projectName}/src/routes/v1/endpoints/${controllerName}.ts`,
+        templateFilets
       );
     } else if (err.code === "ENOENT") {
       error(
