@@ -173,7 +173,7 @@ async function addNewRoute() {
       const projectName = data.projectName;
       try {
         fs.appendFile(
-          `./${projectName}/src/routes/v1/main.ts`,
+          `./src/routes/v1/main.ts`,
           `router.get('/${controllerName}', require('./endpoints/${controllerName}'));`,
           function (err) {
             if (err) return error("Something went wrong!");
@@ -186,7 +186,7 @@ async function addNewRoute() {
 
       try {
         await fs.writeFileSync(
-          `./${projectName}/src/routes/v1/endpoints/${controllerName}.ts`,
+          `./src/routes/v1/endpoints/${controllerName}.ts`,
           templateFilets
         );
       } catch (err) {
