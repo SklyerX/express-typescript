@@ -258,3 +258,7 @@ trim_trailing_whitespace = false
 [*.{js,jsx,json,ts,tsx,yml}]
 indent_size = 2
 indent_style = space`;
+
+export const extsconfigjson = (projectName: string) => String.raw`{
+  "projectName": "${projectName}"
+}`;

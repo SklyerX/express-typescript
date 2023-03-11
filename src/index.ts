@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 import fs from "fs";
-import { error, success } from "./utils/loggers";
+import terminal from "child_process";
+import inquirer from "inquirer";
+import parseArgs from "minimist";
+import { createSpinner } from "nanospinner";
 import {
   dotenv,
   editorconfig,
   eslint,
+  extsconfigjson,
   gitignore,
   nodemonjson,
   packagejson,
@@ -17,54 +21,175 @@ import {
   maints,
   utilsSlashLoggersts,
 } from "./__mocks__/inner";
+import { error, info, success } from "./utils/loggers";
+
+const argv = parseArgs(process.argv.slice(2));
+
+let { _, git, download, npm } = argv;
+
+git = git ?? true;
+download = download ?? false;
+npm = npm === undefined || npm === "true";
+
+/**
+ * Initialize a new GitHub repository.
+ *
+ * @param projectName The name of the project.
+ * @param downloadEnabled Whether to download node modules.
+ * @param npmEnabled Whether to use NPM or Yarn.
+ */
+
+async function initializeGithubRepo(
+  projectName: string,
+  downloadEnabled: boolean,
+  npmEnabled: boolean
+) {
+  const gitSpinner = createSpinner("Initializing GitHub Repo").start();
+
+  try {
+    await executeCommand(`cd ${projectName} && git init`, (output) => null);
+    gitSpinner.success();
+
+    if (!downloadEnabled) {
+      info(
+        `\n\n-------\ncd ${projectName}\n${
+          npmEnabled ? "npm" : "yarn"
+        } install\nnodemon start`
+      );
+    }
+  } catch (error) {
+    gitSpinner.error();
+  }
+}
+
+/**
+ * Download the node modules
+ *
+ * @param projectName The name of the project.
+ */
+
+async function downloadNodeModules(projectName: string) {
+  if (download == "true") {
+    const npmSpinner = createSpinner("Downloading node modules").start();
+    executeCommand(
+      `cd ${projectName} && ${npm ? "npm" : "yarn"} install`,
+      () => {
+        npmSpinner.success();
+        info(
+          `\n\n-------\ncd ${projectName}\n${
+            npm ? "npm" : "yarn"
+          } install\nnodemon start`
+        );
+      }
+    );
+    return 0;
+  }
+}
 
 async function bootstrap() {
   let projectName = "";
 
-  if (!process.argv[2] && process.argv[2] !== "--name") {
-    error("you are missing the --name value!");
-    process.exit();
+  if (_.length <= 0) {
+    error("Provide a name!");
+    info("Run like: express-typescript dirname --git boolean");
+    return 1;
   }
-  if (!process.argv[3]) {
-    error("Name value is missing!");
-    process.exit();
-  }
-  projectName = process.argv[3];
 
-  // Create data
-  await fs.mkdirSync(`${projectName}`);
-  await fs.mkdirSync(`${projectName}/src`);
-  await fs.mkdirSync(`${projectName}/src/interfaces`);
-  await fs.mkdirSync(`${projectName}/src/routes`);
-  await fs.mkdirSync(`${projectName}/src/routes/v1`);
-  await fs.mkdirSync(`${projectName}/src/routes/v1/endpoints`);
-  await fs.mkdirSync(`${projectName}/src/schemas`);
-  await fs.mkdirSync(`${projectName}/src/utils`);
-  // Create outer files
-  await fs.writeFileSync(`./${projectName}/tsconfig.json`, tsconfig);
-  await fs.writeFileSync(`./${projectName}/package.json`, packagejson);
-  await fs.writeFileSync(`./${projectName}/nodemon.json`, nodemonjson);
-  await fs.writeFileSync(`./${projectName}/.prettierrc`, prettier[0]);
-  await fs.writeFileSync(`./${projectName}/.prettierignore`, prettier[1]);
-  await fs.writeFileSync(`./${projectName}/.gitignore`, gitignore);
-  await fs.writeFileSync(`./${projectName}/.eslintrc.json`, eslint[0]);
-  await fs.writeFileSync(`./${projectName}/.eslintignore`, eslint[1]);
-  await fs.writeFileSync(`./${projectName}/.env`, dotenv);
-  await fs.writeFileSync(`./${projectName}/.editorconfig`, editorconfig);
-  //   Create Inner files
-  await fs.writeFileSync(`./${projectName}/src/index.ts`, indexts);
-  await fs.writeFileSync(
-    `./${projectName}/src/utils/loggers.ts`,
-    utilsSlashLoggersts
-  );
-  await fs.writeFileSync(`./${projectName}/src/routes/v1/main.ts`, maints);
-  await fs.writeFileSync(
-    `./${projectName}/src/routes/v1/endpoints/health.ts`,
-    healthts
-  );
+  projectName = _[0];
 
-  success("The project file has been generated");
-  console.log(`cd ${projectName}\nnpm install\nnodemon start`);
+  if (git) initializeGithubRepo(projectName, download, npm);
+
+  // Creating directories
+  const directories = [
+    `${projectName}`,
+    `${projectName}/src`,
+    `${projectName}/src/interfaces`,
+    `${projectName}/src/routes`,
+    `${projectName}/src/routes/v1`,
+    `${projectName}/src/routes/v1/endpoints`,
+    `${projectName}/src/schemas`,
+    `${projectName}/src/utils`,
+  ];
+
+  for (const directory of directories) await fs.mkdirSync(directory);
+
+  // Creating file content
+  const files = [
+    {
+      path: `./${projectName}/exts.config.json`,
+      content: extsconfigjson(projectName),
+    },
+    { path: `./${projectName}/tsconfig.json`, content: tsconfig },
+    { path: `./${projectName}/package.json`, content: packagejson },
+    { path: `./${projectName}/nodemon.json`, content: nodemonjson },
+    { path: `./${projectName}/.prettierrc`, content: prettier[0] },
+    { path: `./${projectName}/.prettierignore`, content: prettier[1] },
+    { path: `./${projectName}/.gitignore`, content: gitignore },
+    { path: `./${projectName}/.eslintrc.json`, content: eslint[0] },
+    { path: `./${projectName}/.eslintignore`, content: eslint[1] },
+    { path: `./${projectName}/.env`, content: dotenv },
+    { path: `./${projectName}/.editorconfig`, content: editorconfig },
+    { path: `./${projectName}/src/index.ts`, content: indexts },
+    {
+      path: `./${projectName}/src/utils/loggers.ts`,
+      content: utilsSlashLoggersts,
+    },
+    { path: `./${projectName}/src/routes/v1/main.ts`, content: maints },
+    {
+      path: `./${projectName}/src/routes/v1/endpoints/health.ts`,
+      content: healthts,
+    },
+  ];
+
+  for (const file of files) await fs.writeFileSync(file.path, file.content);
+
+  downloadNodeModules(projectName);
 }
 
-bootstrap();
+function executeCommand(command: string, callback: (param: string) => void) {
+  terminal.exec(command, (error, stdout, stderr) => {
+    callback(stdout);
+  });
+}
+
+async function addNewRoute() {
+  const getName = await inquirer.prompt({
+    name: "controller_name",
+    type: "input",
+    message: "What is the name of this controller? ",
+    default() {
+      return "route-name";
+    },
+  });
+
+  const controllerName = getName.controller_name;
+
+  fs.stat("./exts.config.json", async function (err, stat) {
+    if (err == null) {
+      const data = JSON.parse(fs.readFileSync("./exts.config.json", "utf-8"));
+      const projectName = data.projectName;
+
+      await fs.writeFileSync(
+        `./${projectName}/src/routes/v1/endpoints/${controllerName}.ts`,
+        healthts
+      );
+      fs.appendFile(
+        `./${projectName}/src/routes/v1/main.ts`,
+        `router.get('/${controllerName}', require('./endpoints/${controllerName}'));`,
+        function (err) {
+          if (err) return error("Something went wrong!");
+          success("New file endpoint generated.");
+        }
+      );
+    } else if (err.code === "ENOENT") {
+      error(
+        "Please make sure you are a working directory generated by express-typescript"
+      );
+    } else {
+      console.log("Some other error: ", err.code);
+    }
+  });
+}
+
+if (_[0] == "generate") addNewRoute();
+else bootstrap();

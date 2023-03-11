@@ -104,9 +104,21 @@ router.use((req, res, next) => {
 
 router.get('/health', require('./endpoints/health'));`;
 
-export const healthts = `module.exports = (req: any, res: any) => {
+export const healthts = `import { Request, Response } from "express";
+
+module.exports = (req: Request, res: Response) => {
   return res.status(200).send({
     success: true,
     message: 'The api is active and healthy.',
   });
+};`;
+
+export const templateFilets = `import { Request, Response } from "express";
+
+module.exports = (req: Request, res: Response) => {
+  res.status(302).send({
+    message: "Endpoint is live"
+  });
+  
+  return 0;
 };`;
