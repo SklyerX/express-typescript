@@ -21,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-app.use('/v1', require('./routes/v1/main'));
+app.use('/v1', require('./routes/main'));
 
 const PORT = process.env.PORT ? process.env.PORT : 3001;
 const MONGODB_URI = process.env.MONGODB_URI
@@ -49,45 +49,34 @@ mongoose.connection
   })
   .on('close', () => {
     warn("MongoDB Connection", "Db closed");
-  });
-
-  // LOADED ENDPOINTS
-
-(async () => {
-    const endpoints = await globPromise(\`\${process.cwd()}/src/routes/v1/**/*.ts\`);
-    endpoints.map((value) => {
-      const fileName = value.split('/endpoints/')[1];
-      if (fileName === undefined) return;
-      alert("Success! Loaded:" + fileName, 'Routes');
-    });
-})();`;
+  });`;
 
 export const utilsSlashLoggersts = `import chalk from 'chalk';
 
 export function success(message: string, route: string) {
   const yellow = chalk.yellowBright(\`\${route.toUpperCase()}\`)
-  console.log(chalk.green("[ " + \`\${yellow}\` + " ]" + \`\${message}\`))
+  console.log(chalk.green("[ " + \`\${yellow}\` + " ] " + \`\${message}\`))
 }
 
 export function alert(message: string, route: string) {
-  const cyan = chalk.cyan(\`\${route.toUpperCase()}\`)
-  console.log(chalk.green("[ " + \`\${cyan}\` + " ]" + \`\${message}\`))
+  const cyan = chalk.white(\`\${route.toUpperCase()}\`)
+  console.log(chalk.cyan("[ " + \`\${cyan}\` + " ] " + \`\${message}\`))
 }
 
 export function error(message: string, route: string) {
   const white = chalk.white(\`\${route.toUpperCase()}\`)
-  console.log(chalk.red("[ " + \`\${white}\` + " ]" + \`\${message}\`))
+  console.log(chalk.red("[ " + \`\${white}\` + " ] " + \`\${message}\`))
 }
 
 export function warn(message: string, route: string) {
   const magenta = chalk.magenta(\`\${route.toUpperCase()}\`)
-  console.log(chalk.red("[ " + \`\${magenta}\` + " ]" + \`\${message}\`))
+  console.log(chalk.yellow("[ " + \`\${magenta}\` + " ] " + \`\${message}\`))
 }
 `;
 
 export const maints = `import express from 'express';
 import chalk from 'chalk';
-import { alert } from '../../utils/loggers';
+import { alert } from '../utils/loggers';
 
 const router = express.Router();
 

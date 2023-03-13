@@ -47,7 +47,7 @@ function initializeGithubRepo(projectName, downloadEnabled, npmEnabled) {
             gitSpinner.success();
             if (!downloadEnabled) {
                 (0, loggers_1.projectFinishedInfo)(projectName, npm, git, download);
-                (0, loggers_1.infoNoDate)(`\ncd ${projectName}\n${npmEnabled ? "npm" : "yarn"} install\nnodemon start`);
+                (0, loggers_1.info)(`cd ${projectName}\n${npmEnabled ? "npm" : "yarn"} install\nnodemon start`);
             }
         }
         catch (error) {
@@ -67,19 +67,19 @@ function executeCommand(command, callback) {
     });
 }
 /**
- * Download the node_modules
+ * Download the node modules
  *
  * @param projectName The name of the project you will be operating in.
  */
 function downloadNodeModules(projectName) {
     return __awaiter(this, void 0, void 0, function* () {
         if (download == "true") {
-            const npmSpinner = (0, nanospinner_1.createSpinner)("Downloading node_modules").start();
+            const npmSpinner = (0, nanospinner_1.createSpinner)("Downloading node modules").start();
             executeCommand(`cd ${projectName} && ${npm ? "npm" : "yarn"} install`, () => {
                 npmSpinner.success();
-                (0, loggers_1.projectFinishedInfo)(projectName, npm, git, download);
-                (0, loggers_1.infoNoDate)(`\n\n-------\ncd ${projectName}\n${npm ? "npm" : "yarn"} install\nnodemon start`);
+                (0, loggers_1.info)(`\n\n-------\ncd ${projectName}\n${npm ? "npm" : "yarn"} install\nnodemon start`);
             });
+            (0, loggers_1.projectFinishedInfo)(projectName, npm, git, download);
             return 0;
         }
     });
@@ -140,18 +140,7 @@ function addNewRoute() {
         });
         const httpMethod = yield inquirer_1.default.prompt({
             name: "http_method",
-            type: "list",
-            choices: [
-                "GET",
-                "POST",
-                "PUT",
-                "PATCH",
-                "DELETE",
-                "HEAD",
-                "CONNECT",
-                "OPTIONS",
-                "TRACE",
-            ],
+            type: "input",
             message: "What is the http method? ",
             default() {
                 return "get";
@@ -207,33 +196,7 @@ function addNewRoute() {
         });
     });
 }
-function showUnkown() {
-    console.log(`
-Unkown command: "${_[0]}"
-
-If you don't know the commands and or their functionalities
-run: "exts help"`);
-}
-function showHelp() {
-    console.log(`
-<> = required | [] = optional
-
-exts <command>
-
-Usage:
-
-exts new <foo> --git boolean --download boolean --npm boolean   |  Create a new project. <foo> is the name of your project, --git can be true/false whether you want to init a github repo or not, --download allows you to download the modules with the package manager of your choice (npm/yarn), --npm allows you to select your package manager between npm and yarn.
-
-exts generate [foo]  | create a new route for the api. The [foo] value is the location you'd like to create the file in from the root (the root is main.ts).
-
-for more help visit the README.md in https://github.com/SklyerX/express-typescript
-`);
-}
 if (_[0] == "new")
     bootstrap();
 else if (_[0] == "generate")
     addNewRoute();
-else if (_[0] == "help")
-    showHelp();
-else
-    showUnkown();

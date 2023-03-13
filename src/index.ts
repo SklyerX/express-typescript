@@ -2,30 +2,27 @@
 import fs from "fs";
 import terminal from "child_process";
 import inquirer from "inquirer";
-import parseArgs from "minimist";
+import minimist from "minimist";
 import { createSpinner } from "nanospinner";
 import {
-  dotenv,
-  editorconfig,
-  eslint,
-  extsconfigjson,
-  gitignore,
-  nodemonjson,
-  packagejson,
-  prettier,
-  tsconfig,
-} from "./__mocks__/outer";
-import {
-  healthts,
-  indexts,
-  maints,
-  templateFilets,
-  utilsSlashLoggersts,
-} from "./__mocks__/inner";
-import { error, info, success } from "./utils/loggers";
+  info,
+  success,
+  error,
+  showData,
+  projectFinishedInfo,
+  infoNoDate,
+} from "./utils/loggers";
+import { getDirectories, getFiles } from "./utils/ContentDeliverer";
+import { templateFilets } from "./__mocks__/inner";
 
-const argv = parseArgs(process.argv.slice(2));
+/**
+ * Grabbing the arguments the user passes while running the cli.
+ * EX: exts generate /careers/main <-- it's starts from the "main.ts" file | the main.ts file is the "root"
+ * or
+ * exts new projectName --git boolean --download boolean --npm boolean
+ */
 
+const argv = minimist(process.argv.splice(2));
 let { _, git, download, npm } = argv;
 
 git = git ?? true;
@@ -52,8 +49,9 @@ async function initializeGithubRepo(
     gitSpinner.success();
 
     if (!downloadEnabled) {
-      info(
-        `\n\n-------\ncd ${projectName}\n${
+      projectFinishedInfo(projectName, npm, git, download);
+      infoNoDate(
+        `\ncd ${projectName}\n${
           npmEnabled ? "npm" : "yarn"
         } install\nnodemon start`
       );
@@ -64,145 +62,226 @@ async function initializeGithubRepo(
 }
 
 /**
- * Download the node modules
+ * Executing a command in the terminal.
  *
- * @param projectName The name of the project.
+ * @param command The string of command(s) to execute in the terminal.
+ * @param output The output to the terminal of the command ran. (Ex: node modules downloaded).
+ */
+
+function executeCommand(command: string, callback: (output: string) => void) {
+  terminal.exec(command, (error, stdout, stderr) => {
+    callback(stdout);
+  });
+}
+
+/**
+ * Download the node_modules
+ *
+ * @param projectName The name of the project you will be operating in.
  */
 
 async function downloadNodeModules(projectName: string) {
   if (download == "true") {
-    const npmSpinner = createSpinner("Downloading node modules").start();
+    const npmSpinner = createSpinner("Downloading node_modules").start();
     executeCommand(
       `cd ${projectName} && ${npm ? "npm" : "yarn"} install`,
       () => {
         npmSpinner.success();
-        info(
+        projectFinishedInfo(projectName, npm, git, download);
+        infoNoDate(
           `\n\n-------\ncd ${projectName}\n${
             npm ? "npm" : "yarn"
           } install\nnodemon start`
         );
       }
     );
+
     return 0;
   }
 }
 
 async function bootstrap() {
+  // Variables and Data
   let projectName = "";
 
   if (_.length <= 0) {
-    error("Provide a name!");
+    error("You have to provide a directory name in order to run the command!");
     info(
-      "Run like: express-typescript dirname --git true --download true --npm false"
+      "Example: exts new DirectoryName --git Boolean --download Boolean --npm Boolean"
     );
-    return 1;
+
+    return 0;
   }
 
-  projectName = _[0];
+  projectName = _[1];
 
   if (git) initializeGithubRepo(projectName, download, npm);
 
-  // Creating directories
-  const directories = [
-    `${projectName}`,
-    `${projectName}/src`,
-    `${projectName}/src/interfaces`,
-    `${projectName}/src/routes`,
-    `${projectName}/src/routes/v1`,
-    `${projectName}/src/routes/v1/endpoints`,
-    `${projectName}/src/schemas`,
-    `${projectName}/src/utils`,
-  ];
+  let directories = getDirectories(projectName);
+  let files = getFiles(projectName);
 
-  for (const directory of directories) await fs.mkdirSync(directory);
-
-  // Creating file content
-  const files = [
-    {
-      path: `./${projectName}/exts.config.json`,
-      content: extsconfigjson(projectName),
-    },
-    { path: `./${projectName}/tsconfig.json`, content: tsconfig },
-    { path: `./${projectName}/package.json`, content: packagejson },
-    { path: `./${projectName}/nodemon.json`, content: nodemonjson },
-    { path: `./${projectName}/.prettierrc`, content: prettier[0] },
-    { path: `./${projectName}/.prettierignore`, content: prettier[1] },
-    { path: `./${projectName}/.gitignore`, content: gitignore },
-    { path: `./${projectName}/.eslintrc.json`, content: eslint[0] },
-    { path: `./${projectName}/.eslintignore`, content: eslint[1] },
-    { path: `./${projectName}/.env`, content: dotenv },
-    { path: `./${projectName}/.editorconfig`, content: editorconfig },
-    { path: `./${projectName}/src/index.ts`, content: indexts },
-    {
-      path: `./${projectName}/src/utils/loggers.ts`,
-      content: utilsSlashLoggersts,
-    },
-    { path: `./${projectName}/src/routes/v1/main.ts`, content: maints },
-    {
-      path: `./${projectName}/src/routes/v1/endpoints/health.ts`,
-      content: healthts,
-    },
-  ];
-
+  for (const dir of directories) await fs.mkdirSync(dir);
   for (const file of files) await fs.writeFileSync(file.path, file.content);
 
   downloadNodeModules(projectName);
 }
 
-function executeCommand(command: string, callback: (param: string) => void) {
-  terminal.exec(command, (error, stdout, stderr) => {
-    callback(stdout);
-  });
+/**
+ * Sanitize the file name. This function will remove any
+ * invalid characters that can not be placed in a filename
+ *
+ * @param fileName The file name that you will use for the file.
+ */
+
+function sanitizeFileName(fileName: string) {
+  const invalidChars = /[/:*?"<>|\\]/g;
+  if (invalidChars.test(fileName)) {
+    return fileName.replace(invalidChars, "-");
+  }
+  return fileName;
 }
 
 async function addNewRoute() {
+  const filePath = _[1];
+  const specificFile = filePath !== undefined ? true : false;
+
   const getName = await inquirer.prompt({
     name: "controller_name",
     type: "input",
-    message: "What is the name of this controller? ",
+    message: "What is the name of the file? ",
+    default() {
+      return "file-name";
+    },
+  });
+
+  const getRoute = await inquirer.prompt({
+    name: "route_name",
+    type: "input",
+    message: "What is the route endpoint? ",
     default() {
       return "route-name";
     },
   });
 
-  const controllerName = getName.controller_name;
+  const httpMethod = await inquirer.prompt({
+    name: "http_method",
+    type: "list",
+    choices: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD",
+      "CONNECT",
+      "OPTIONS",
+      "TRACE",
+    ],
+    message: "What is the http method? ",
+    default() {
+      return "get";
+    },
+  });
+
+  const fileName = sanitizeFileName(getName.controller_name);
+  const routeName = getRoute.route_name;
+  const http_method = httpMethod.http_method;
 
   fs.stat("./exts.config.json", async function (err, stat) {
     if (err == null) {
-      const data = JSON.parse(fs.readFileSync("./exts.config.json", "utf-8"));
-      const projectName = data.projectName;
-      try {
-        fs.appendFile(
-          `./src/routes/v1/main.ts`,
-          `router.get('/${controllerName}', require('./endpoints/${controllerName}'));`,
+      fs.appendFile(
+        "./src/routes/main.ts",
+        `\nrouter.${http_method.toLowerCase()}("/${routeName}", require("${
+          specificFile
+            ? `./${filePath}/${fileName}.ts`
+            : `./endpoints/${fileName}.ts`
+        }"));`,
+        function (err) {
+          if (err)
+            error(
+              "Something went wrong while appending new data to 'main.ts'!"
+            );
+        }
+      );
+
+      if (specificFile) {
+        const dirs = [...filePath.split("/")];
+        let currentPath = "./src/routes";
+
+        for (const dir of dirs) {
+          currentPath = `${currentPath}/${dir}`;
+
+          if (!fs.existsSync(currentPath)) {
+            try {
+              fs.mkdirSync(currentPath);
+            } catch (err) {
+              error(`Failed to create directory ${currentPath}: ${err}`);
+              break;
+            }
+          }
+        }
+
+        await fs.writeFile(
+          `${currentPath}/${fileName}.ts`,
+          templateFilets,
           function (err) {
-            if (err) return error("Something went wrong!");
-            success("New file endpoint generated.");
+            if (err)
+              return error(
+                "Something went wrong while generating the file! -with"
+              );
+            success(`File created at: ${currentPath}/${fileName}.ts`);
+            showData(fileName, http_method.toUpperCase(), currentPath);
           }
         );
-      } catch (err) {
-        error("Something went wrong while adding the file");
-      }
-
-      try {
-        await fs.writeFileSync(
-          `./src/routes/v1/endpoints/${controllerName}.ts`,
-          templateFilets
+      } else {
+        await fs.writeFile(
+          `./src/routes/endpoints/${fileName}.ts`,
+          templateFilets,
+          function (err) {
+            if (err)
+              return error(
+                "Something went wrong while generating the file! -without"
+              );
+            success(`File created at: ./src/routes/endpoints/${fileName}.ts`);
+            showData(
+              fileName,
+              http_method,
+              `./src/routes/endpoints/${fileName}.ts`
+            );
+          }
         );
-      } catch (err) {
-        error(
-          "Something went wrong while creating the file in the endpoints directory!"
-        );
       }
-    } else if (err.code === "ENOENT") {
-      error(
-        "Please make sure you are a working directory generated by express-typescript"
-      );
     } else {
-      console.log("Some other error: ", err.code);
+      error("Something went wrong!");
     }
   });
 }
 
-if (_[0] == "generate") addNewRoute();
-else bootstrap();
+function showUnkown() {
+  console.log(`
+Unkown command: "${_[0]}"
+
+If you don't know the commands and or their functionalities
+run: "exts help"`);
+}
+
+function showHelp() {
+  console.log(`
+<> = required | [] = optional
+
+exts <command>
+
+Usage:
+
+exts new <foo> --git boolean --download boolean --npm boolean   |  Create a new project. <foo> is the name of your project, --git can be true/false whether you want to init a github repo or not, --download allows you to download the modules with the package manager of your choice (npm/yarn), --npm allows you to select your package manager between npm and yarn.
+
+exts generate [foo]  | create a new route for the api. The [foo] value is the location you'd like to create the file in from the root (the root is main.ts).
+
+for more help visit the README.md in https://github.com/SklyerX/express-typescript
+`);
+}
+
+if (_[0] == "new") bootstrap();
+else if (_[0] == "generate") addNewRoute();
+else if (_[0] == "help") showHelp();
+else showUnkown();

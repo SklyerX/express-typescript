@@ -103,7 +103,7 @@ export const tsconfig = String.raw`{
 }`;
 
 export const packagejson = String.raw`{
-    "name": "test-a",
+    "name": "exts-project",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",

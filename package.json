@@ -1,6 +1,6 @@
 {
-  "name": "@sklyerx/express-typescript",
-  "version": "3.0.6",
+  "name": "@sklyerx/exts",
+  "version": "1.0.1",
   "description": "A nodejs cli to create fast and powerfull express-typescript api",
   "main": "src/index.ts",
   "bin": "./dist/index.js",
@@ -31,6 +31,7 @@
     "fs": "^0.0.1-security",
     "inquirer": "^8.2.5",
     "minimist": "^1.2.8",
+    "moment": "^2.29.4",
     "nanospinner": "^1.1.0",
     "tsconfig-paths": "^4.1.0"
   },
